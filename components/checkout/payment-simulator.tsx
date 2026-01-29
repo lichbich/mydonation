@@ -10,18 +10,17 @@ import { toast } from "sonner";
 import { CheckCircle, XCircle, Loader2, CreditCard, Shield } from "lucide-react";
 
 interface PaymentSimulatorProps {
-    donationId: string;
-    amount: number;
-    creatorName: string;
-    creatorUsername: string;
+    donation: {
+        id: string;
+        amount: number;
+        creator: {
+            name: string | null;
+            username: string;
+        };
+    };
 }
 
-export function PaymentSimulator({
-    donationId,
-    amount,
-    creatorName,
-    creatorUsername,
-}: PaymentSimulatorProps) {
+export function PaymentSimulator({ donation }: PaymentSimulatorProps) {
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
     const [status, setStatus] = useState<"idle" | "success" | "cancelled">("idle");
@@ -32,7 +31,7 @@ export function PaymentSimulator({
         // Simulate payment delay
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        const result = await simulatePayment(donationId, action);
+        const result = await simulatePayment(donation.id, action);
 
         if (result.error) {
             toast.error(result.error);
@@ -59,10 +58,10 @@ export function PaymentSimulator({
                     </div>
                     <h2 className="text-2xl font-bold mb-2">Thanh Toán Thành Công!</h2>
                     <p className="text-muted-foreground mb-6">
-                        Cảm ơn bạn đã ủng hộ <strong>{creatorName}</strong>!
+                        Cảm ơn bạn đã ủng hộ <strong>{donation.creator.name}</strong>!
                     </p>
                     <div className="flex gap-4">
-                        <Button variant="outline" onClick={() => router.push(`/${creatorUsername}`)} className="flex-1">
+                        <Button variant="outline" onClick={() => router.push(`/c/${donation.creator.username}`)} className="flex-1">
                             Quay Lại Trang Creator
                         </Button>
                         <Button onClick={() => router.push("/")} className="flex-1">
@@ -86,7 +85,7 @@ export function PaymentSimulator({
                         Bạn đã hủy thanh toán. Không có khoản phí nào được trừ.
                     </p>
                     <div className="flex gap-4">
-                        <Button variant="outline" onClick={() => router.push(`/${creatorUsername}`)} className="flex-1">
+                        <Button variant="outline" onClick={() => router.push(`/c/${donation.creator.username}`)} className="flex-1">
                             Quay Lại
                         </Button>
                         <Button onClick={() => setStatus("idle")} className="flex-1">
@@ -111,7 +110,7 @@ export function PaymentSimulator({
                 {/* Amount */}
                 <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-pink-500/10 text-center">
                     <p className="text-sm text-muted-foreground mb-1">Số tiền thanh toán</p>
-                    <p className="text-3xl font-bold text-primary">{formatCurrency(amount)}</p>
+                    <p className="text-3xl font-bold text-primary">{formatCurrency(donation.amount)}</p>
                 </div>
 
                 {/* Mock Card Input */}
