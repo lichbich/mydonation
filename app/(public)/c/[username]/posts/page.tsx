@@ -1,27 +1,31 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { getCreatorPosts } from "@/lib/actions/posts";
+import { PostListTabs } from "@/components/posts/post-list";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
-export const metadata = {
-    title: "Bài Viết",
-};
+export default async function CreatorPostsPage({ params }: { params: Promise<{ username: string }> }) {
+    const { username } = await params;
+    const data = await getCreatorPosts(username);
 
-export default function CreatorPostsPage() {
+    if (!data) notFound();
+
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Bài Viết</h2>
+        <div className="container py-12 px-4 max-w-4xl mx-auto min-h-screen">
+            <div className="mb-8 flex items-center gap-4">
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href={`/c/${username}`}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Link>
+                </Button>
+                <div>
+                    <h1 className="text-3xl font-bold">Bài Viết</h1>
+                    <p className="text-muted-foreground">Cập nhật mới nhất từ {username}</p>
+                </div>
+            </div>
 
-            {/* Empty State */}
-            <Card className="border-dashed">
-                <CardContent className="py-16 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                        <FileText className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-bold text-lg mb-2">Chưa có bài viết</h3>
-                    <p className="text-muted-foreground">
-                        Creator chưa đăng bài viết nào
-                    </p>
-                </CardContent>
-            </Card>
+            <PostListTabs posts={data.posts} username={username} />
         </div>
     );
 }

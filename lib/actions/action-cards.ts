@@ -17,22 +17,17 @@ export async function createActionCard(data: ActionCardInput) {
     }
 
     try {
-        const count = await prisma.actionCard.count({
-            where: { creatorId: session.user.id },
-        });
-
         const actionCard = await prisma.actionCard.create({
             data: {
                 ...validated.data,
                 creatorId: session.user.id,
-                sortOrder: count,
             },
         });
 
         // Enable creator mode if not already
         await prisma.user.update({
             where: { id: session.user.id },
-            data: { isCreator: true },
+            data: { role: "CREATOR" },
         });
 
         revalidatePath("/dashboard");
@@ -104,7 +99,7 @@ export async function deleteActionCard(id: string) {
     }
 }
 
-export async function toggleActionCard(id: string) {
+export async function toggleActionCardFeatured(id: string) {
     const session = await auth();
     if (!session?.user?.id) {
         return { error: "Bạn cần đăng nhập" };
@@ -121,7 +116,7 @@ export async function toggleActionCard(id: string) {
 
         await prisma.actionCard.update({
             where: { id },
-            data: { isActive: !actionCard.isActive },
+            data: { isFeatured: !actionCard.isFeatured },
         });
 
         revalidatePath("/dashboard");
@@ -141,12 +136,13 @@ export async function getMyActionCards() {
 
     return prisma.actionCard.findMany({
         where: { creatorId: session.user.id },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { createdAt: "asc" },
         include: {
             _count: {
-                select: { donations: true },
+                select: { transactions: true },
             },
         },
     });
 }
+
 

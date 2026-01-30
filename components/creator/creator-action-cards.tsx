@@ -6,10 +6,11 @@ import { CheckoutModal } from "@/components/checkout/checkout-modal";
 
 interface CreatorActionCardsProps {
     actionCards: any[];
+    creatorId: string;
     creatorName: string;
 }
 
-export function CreatorActionCards({ actionCards, creatorName }: CreatorActionCardsProps) {
+export function CreatorActionCards({ actionCards, creatorId, creatorName }: CreatorActionCardsProps) {
     const [selectedCard, setSelectedCard] = useState<any>(null);
     const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -36,6 +37,7 @@ export function CreatorActionCards({ actionCards, creatorName }: CreatorActionCa
 
             <CheckoutModal
                 actionCard={selectedCard}
+                creatorId={creatorId}
                 creatorName={creatorName}
                 open={checkoutOpen}
                 onOpenChange={setCheckoutOpen}

@@ -30,7 +30,7 @@ import { DonationCard, DonationCardSkeleton } from "@/components/cards/donation-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { actionCardSchema, ActionCardInput } from "@/lib/validations";
-import { createActionCard, deleteActionCard, toggleActionCard } from "@/lib/actions/action-cards";
+import { createActionCard, deleteActionCard, toggleActionCardFeatured } from "@/lib/actions/action-cards";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -75,8 +75,8 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
             title: "",
             description: "",
             price: 25000,
-            emoji: "☕",
-            color: "#FF5E5B",
+            icon: "☕",
+            isFeatured: false,
         },
     });
 
@@ -119,7 +119,7 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
     const handleToggle = async (id: string) => {
         setTogglingId(id);
         try {
-            const result = await toggleActionCard(id);
+            const result = await toggleActionCardFeatured(id);
             if (result.error) {
                 toast.error(result.error);
             } else {
@@ -132,8 +132,8 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
         }
     };
 
-    const selectedEmoji = form.watch("emoji");
-    const selectedColor = form.watch("color");
+    const selectedIcon = form.watch("icon");
+    const isFeatured = form.watch("isFeatured");
 
     return (
         <div className="min-h-screen py-8">
@@ -240,10 +240,9 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
                                             <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
                                                 {/* Preview */}
                                                 <div
-                                                    className="p-4 rounded-lg border text-center"
-                                                    style={{ backgroundColor: `${selectedColor}10` }}
+                                                    className="p-4 rounded-lg border text-center bg-primary/10"
                                                 >
-                                                    <span className="text-4xl">{selectedEmoji}</span>
+                                                    <span className="text-4xl">{selectedIcon || "☕"}</span>
                                                 </div>
 
                                                 <FormField
@@ -288,8 +287,11 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
                                                                     type="number"
                                                                     min={1000}
                                                                     step={1000}
-                                                                    value={field.value}
-                                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                                    {...field}
+                                                                    onChange={(e) => {
+                                                                        const value = e.target.valueAsNumber;
+                                                                        field.onChange(isNaN(value) ? 0 : value);
+                                                                    }}
                                                                 />
                                                             </FormControl>
                                                             <FormMessage />
@@ -299,10 +301,10 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
 
                                                 <FormField
                                                     control={form.control}
-                                                    name="emoji"
+                                                    name="icon"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>Emoji</FormLabel>
+                                                            <FormLabel>Icon</FormLabel>
                                                             <FormControl>
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {EMOJI_OPTIONS.map((emoji) => (
@@ -317,33 +319,6 @@ export function DashboardClient({ profile, actionCards, donations, stats }: Prop
                                                                         >
                                                                             {emoji}
                                                                         </button>
-                                                                    ))}
-                                                                </div>
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-
-                                                <FormField
-                                                    control={form.control}
-                                                    name="color"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Màu sắc</FormLabel>
-                                                            <FormControl>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {COLOR_OPTIONS.map((color) => (
-                                                                        <button
-                                                                            key={color}
-                                                                            type="button"
-                                                                            className={`w-8 h-8 rounded-full transition-all ${field.value === color
-                                                                                ? "ring-2 ring-offset-2 ring-primary"
-                                                                                : ""
-                                                                                }`}
-                                                                            style={{ backgroundColor: color }}
-                                                                            onClick={() => field.onChange(color)}
-                                                                        />
                                                                     ))}
                                                                 </div>
                                                             </FormControl>

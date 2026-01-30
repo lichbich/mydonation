@@ -5,15 +5,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserWithRelations } from "@/lib/types";
 import { ArrowRight, Users } from "lucide-react";
 
 interface CreatorCardProps {
-    creator: UserWithRelations & {
+    creator: {
+        id: string;
+        name: string;
+        username: string;
+        image?: string | null;
+        bio?: string | null;
+        creatorProfile?: {
+            headline?: string | null;
+        } | null;
         actionCards?: any[];
-        _count?: { received: number };
+        _count?: { receivedSupport?: number };
     };
 }
+
+const DEFAULT_COLOR = "#6366f1";
 
 export function CreatorCard({ creator }: CreatorCardProps) {
     return (
@@ -39,9 +48,9 @@ export function CreatorCard({ creator }: CreatorCardProps) {
                     </h3>
                     <p className="text-sm text-muted-foreground">@{creator.username}</p>
 
-                    {creator.creatorTitle && (
+                    {creator.creatorProfile?.headline && (
                         <Badge variant="secondary" className="mt-2">
-                            {creator.creatorTitle}
+                            {creator.creatorProfile.headline}
                         </Badge>
                     )}
 
@@ -56,7 +65,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
                 <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        <span>{creator._count?.received || 0} ủng hộ</span>
+                        <span>{creator._count?.receivedSupport || 0} ủng hộ</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <span>{creator.actionCards?.length || 0} Action Cards</span>
@@ -70,10 +79,10 @@ export function CreatorCard({ creator }: CreatorCardProps) {
                             <div
                                 key={card.id}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                                style={{ backgroundColor: `${card.color}20` }}
+                                style={{ backgroundColor: `${DEFAULT_COLOR}20` }}
                                 title={card.title}
                             >
-                                {card.emoji}
+                                {card.icon || "💝"}
                             </div>
                         ))}
                         {creator.actionCards.length > 3 && (
@@ -86,7 +95,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
 
                 {/* CTA */}
                 <Button asChild className="w-full mt-4 group/btn" variant="outline">
-                    <Link href={`/${creator.username}`}>
+                    <Link href={`/c/${creator.username}`}>
                         Xem Trang
                         <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                     </Link>

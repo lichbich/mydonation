@@ -22,9 +22,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const sidebarLinks = [
     {
-        label: "Dashboard",
+        label: "Tổng quan",
         href: "/dashboard",
         icon: LayoutDashboard,
+    },
+    {
+        label: "Thu Nhập",
+        href: "/dashboard/earnings",
+        icon: DollarSign,
+    },
+    {
+        label: "Action Cards",
+        href: "/dashboard/actions",
+        icon: CreditCard,
     },
     {
         label: "Bài Viết",
@@ -37,11 +47,6 @@ const sidebarLinks = [
         icon: Image,
     },
     {
-        label: "Action Cards",
-        href: "/dashboard/actions",
-        icon: CreditCard,
-    },
-    {
         label: "Membership",
         href: "/dashboard/tiers",
         icon: Crown,
@@ -50,11 +55,6 @@ const sidebarLinks = [
         label: "Yêu Cầu",
         href: "/dashboard/requests",
         icon: MessageSquare,
-    },
-    {
-        label: "Thu Nhập",
-        href: "/dashboard/earnings",
-        icon: DollarSign,
     },
     {
         label: "Cài Đặt",

@@ -18,8 +18,11 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { Minus, Plus, Heart, Loader2 } from "lucide-react";
 
+const DEFAULT_COLOR = "#6366f1";
+
 interface CheckoutModalProps {
     actionCard: ActionCardWithRelations | null;
+    creatorId: string;
     creatorName: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -27,6 +30,7 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({
     actionCard,
+    creatorId,
     creatorName,
     open,
     onOpenChange,
@@ -46,20 +50,21 @@ export function CheckoutModal({
         setIsLoading(true);
         try {
             const result = await createDonation({
+                creatorId,
                 actionCardId: actionCard.id,
-                quantity,
+                amount: totalAmount,
                 message: message || undefined,
                 isAnonymous,
             });
 
-            if (result.error) {
-                toast.error(result.error);
+            if ('error' in result && result.error) {
+                toast.error(result.error as string);
                 return;
             }
 
-            if (result.success && result.data) {
+            if (result.donationId) {
                 // Redirect to payment simulation page
-                router.push(`/checkout/${result.data.donationId}`);
+                router.push(`/checkout/${result.donationId}`);
                 onOpenChange(false);
             }
         } catch (error) {
@@ -88,9 +93,9 @@ export function CheckoutModal({
                     <DialogTitle className="flex items-center gap-2">
                         <span
                             className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                            style={{ backgroundColor: `${actionCard.color}20` }}
+                            style={{ backgroundColor: `${DEFAULT_COLOR}20` }}
                         >
-                            {actionCard.emoji}
+                            {actionCard.icon || "💝"}
                         </span>
                         {actionCard.title}
                     </DialogTitle>
@@ -131,7 +136,7 @@ export function CheckoutModal({
                         <p className="text-sm text-muted-foreground mb-1">Tổng tiền</p>
                         <p
                             className="text-2xl font-bold"
-                            style={{ color: actionCard.color }}
+                            style={{ color: DEFAULT_COLOR }}
                         >
                             {formatCurrency(totalAmount)}
                         </p>
@@ -171,7 +176,7 @@ export function CheckoutModal({
                         size="lg"
                         disabled={isLoading}
                         style={{
-                            backgroundColor: actionCard.color,
+                            backgroundColor: DEFAULT_COLOR,
                         }}
                     >
                         {isLoading ? (

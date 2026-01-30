@@ -43,12 +43,17 @@ export async function register(data: RegisterInput) {
     }
 
     try {
+        // In production, import bcrypt and hash like this:
+        // import bcrypt from "bcryptjs";
+        // const hashedPassword = await bcrypt.hash(data.password, 10);
+
         await prisma.user.create({
             data: {
                 name: data.name,
                 username: data.username,
                 email: data.email,
-                password: data.password, // In production, hash this!
+                passwordHash: data.password, // TODO: Hash this in production!
+                role: data.role || "FAN",
             },
         });
 

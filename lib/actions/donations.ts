@@ -2,158 +2,84 @@
 
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { donationSchema, DonationInput } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
-export async function createDonation(data: DonationInput) {
+export async function createDonation(data: {
+    creatorId: string;
+    actionCardId?: string | null;
+    amount: number;
+    message?: string;
+    guestName?: string;
+    isAnonymous?: boolean;
+}) {
     const session = await auth();
+    // Logic: If user logged in, use fanId. Else use guestName (or "Guest" if empty)
 
-    const validated = donationSchema.safeParse(data);
-    if (!validated.success) {
-        return { error: validated.error.issues[0].message };
-    }
+    const transaction = await prisma.supportTransaction.create({
+        data: {
+            creatorId: data.creatorId,
+            fanId: session?.user?.id || null,
+            actionCardId: data.actionCardId,
+            amountCents: data.amount,
+            message: data.message,
+            guestName: data.guestName,
+            isAnonymous: data.isAnonymous || false,
+            status: "PENDING",
+        },
+    });
 
-    try {
-        const actionCard = await prisma.actionCard.findUnique({
-            where: { id: data.actionCardId, isActive: true },
-            include: { creator: true },
-        });
-
-        if (!actionCard) {
-            return { error: "Action Card không tồn tại hoặc đã bị vô hiệu hóa" };
-        }
-
-        const totalAmount = actionCard.price * validated.data.quantity;
-
-        const donation = await prisma.donation.create({
-            data: {
-                amount: totalAmount,
-                quantity: validated.data.quantity,
-                message: validated.data.message,
-                isAnonymous: validated.data.isAnonymous,
-                status: "pending",
-                actionCardId: actionCard.id,
-                creatorId: actionCard.creatorId,
-                supporterId: session?.user?.id || null,
-            },
-        });
-
-        return {
-            success: true,
-            data: {
-                donationId: donation.id,
-                amount: totalAmount,
-                creatorName: actionCard.creator.name,
-                creatorUsername: actionCard.creator.username,
-            }
-        };
-    } catch (error) {
-        console.error(error);
-        return { error: "Không thể tạo donation" };
-    }
+    return { donationId: transaction.id };
 }
 
-export async function simulatePayment(donationId: string, status: "success" | "cancel") {
+export async function simulatePayment(donationId: string, action: "success" | "cancel") {
     try {
-        const donation = await prisma.donation.findUnique({
+        const status = action === "success" ? "SUCCESS" : "CANCEL";
+
+        await prisma.supportTransaction.update({
             where: { id: donationId },
-            include: { creator: true },
+            data: { status },
         });
 
-        if (!donation) {
-            return { error: "Không tìm thấy donation" };
-        }
-
-        if (status === "success") {
-            await prisma.donation.update({
-                where: { id: donationId },
-                data: {
-                    status: "completed",
-                    paymentIntentId: `mock_pi_${Date.now()}`,
-                },
-            });
-
-            revalidatePath(`/${donation.creator.username}`);
-            revalidatePath("/dashboard");
-
-            return { success: true, status: "completed" };
-        } else {
-            await prisma.donation.update({
-                where: { id: donationId },
-                data: { status: "cancelled" },
-            });
-
-            return { success: true, status: "cancelled" };
-        }
+        return { success: true };
     } catch (error) {
-        return { error: "Không thể xử lý thanh toán" };
+        return { error: "Lỗi xử lý thanh toán" };
     }
 }
 
-export async function getCreatorDonations(creatorId: string, limit = 10) {
-    return prisma.donation.findMany({
-        where: {
-            creatorId,
-            status: "completed",
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-            actionCard: true,
-            supporter: {
-                select: {
-                    id: true,
-                    name: true,
-                    image: true,
-                    username: true,
-                },
-            },
-        },
-    });
-}
+// Mock Checkout Confirmation for Step-based Success Page
+export async function confirmTransaction(donationId: string) {
+    try {
+        const tx = await prisma.supportTransaction.findUnique({
+            where: { id: donationId },
+            include: { creator: true }
+        });
 
-export async function getMyDonations() {
-    const session = await auth();
-    if (!session?.user?.id) {
-        return [];
+        if (!tx) return { error: "Transaction not found" };
+        if (tx.status === 'SUCCESS') return { success: true, creatorUsername: tx.creator.username }; // Already successful
+
+        await prisma.supportTransaction.update({
+            where: { id: donationId },
+            data: { status: 'SUCCESS' },
+        });
+
+        revalidatePath(`/c/${tx.creator.username}`);
+        return { success: true, creatorUsername: tx.creator.username };
+    } catch (error) {
+        return { error: "Failed to confirm" };
     }
+}
 
-    return prisma.donation.findMany({
-        where: { creatorId: session.user.id },
-        orderBy: { createdAt: "desc" },
+export async function getDonation(id: string) {
+    return prisma.supportTransaction.findUnique({
+        where: { id },
         include: {
             actionCard: true,
-            supporter: {
-                select: {
-                    id: true,
-                    name: true,
-                    image: true,
-                    username: true,
-                },
+            creator: {
+                select: { name: true, username: true, image: true }
             },
-        },
+            fan: {
+                select: { name: true, username: true, image: true }
+            }
+        }
     });
 }
-
-export async function getCreatorStats(creatorId: string) {
-    const [donations, totalAmount, supporters] = await Promise.all([
-        prisma.donation.count({
-            where: { creatorId, status: "completed" },
-        }),
-        prisma.donation.aggregate({
-            where: { creatorId, status: "completed" },
-            _sum: { amount: true },
-        }),
-        prisma.donation.groupBy({
-            by: ["supporterId"],
-            where: { creatorId, status: "completed", supporterId: { not: null } },
-        }),
-    ]);
-
-    return {
-        totalDonations: donations,
-        totalAmount: totalAmount._sum.amount || 0,
-        supporterCount: supporters.length,
-    };
-}
-

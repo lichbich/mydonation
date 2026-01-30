@@ -23,6 +23,7 @@ export default async function CreatorSupportPage({ params }: PageProps) {
             <h2 className="text-2xl font-bold">Ủng Hộ {creator.name}</h2>
             <CreatorActionCards
                 actionCards={creator.actionCards}
+                creatorId={creator.id}
                 creatorName={creator.name || "Creator"}
             />
         </div>

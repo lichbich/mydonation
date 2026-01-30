@@ -11,12 +11,19 @@ interface ActionCardProps {
     showStats?: boolean;
 }
 
+// Default color for action cards
+const DEFAULT_COLOR = "#6366f1"; // Indigo
+
 export function ActionCard({ actionCard, onSelect, showStats = false }: ActionCardProps) {
+    // Use icon as emoji, or fallback
+    const emoji = actionCard.icon || "💝";
+    const color = DEFAULT_COLOR;
+
     return (
         <Card
             className="group relative overflow-hidden border-2 border-transparent hover:border-primary/50 transition-all duration-300 cursor-pointer bg-gradient-to-br from-card to-card/50"
             style={{
-                boxShadow: `0 4px 20px ${actionCard.color}20`,
+                boxShadow: `0 4px 20px ${color}20`,
             }}
             onClick={() => onSelect?.(actionCard)}
         >
@@ -24,7 +31,7 @@ export function ActionCard({ actionCard, onSelect, showStats = false }: ActionCa
             <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity"
                 style={{
-                    background: `linear-gradient(135deg, ${actionCard.color}40, transparent)`,
+                    background: `linear-gradient(135deg, ${color}40, transparent)`,
                 }}
             />
 
@@ -32,9 +39,9 @@ export function ActionCard({ actionCard, onSelect, showStats = false }: ActionCa
                 {/* Emoji */}
                 <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform duration-300"
-                    style={{ backgroundColor: `${actionCard.color}20` }}
+                    style={{ backgroundColor: `${color}20` }}
                 >
-                    {actionCard.emoji}
+                    {emoji}
                 </div>
 
                 {/* Title */}
@@ -51,13 +58,13 @@ export function ActionCard({ actionCard, onSelect, showStats = false }: ActionCa
                 <div className="flex items-center justify-between">
                     <span
                         className="text-lg font-bold"
-                        style={{ color: actionCard.color }}
+                        style={{ color: color }}
                     >
                         {formatCurrency(actionCard.price)}
                     </span>
                     {showStats && actionCard._count && (
                         <span className="text-xs text-muted-foreground">
-                            {actionCard._count.donations} lượt ủng hộ
+                            {actionCard._count.transactions} lượt ủng hộ
                         </span>
                     )}
                 </div>
@@ -67,7 +74,7 @@ export function ActionCard({ actionCard, onSelect, showStats = false }: ActionCa
                     <Button
                         className="w-full"
                         style={{
-                            backgroundColor: actionCard.color,
+                            backgroundColor: color,
                             color: "white",
                         }}
                     >

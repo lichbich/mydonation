@@ -1,44 +1,51 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Heart } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import { confirmTransaction } from "@/lib/actions/donations";
+import { Suspense } from "react";
 
-export const metadata = {
-    title: "Thanh Toán Thành Công",
-};
+interface PageProps {
+    searchParams: Promise<{ tid?: string }>;
+}
 
-export default function CheckoutSuccessPage() {
+async function SuccessContent({ tid }: { tid?: string }) {
+    if (tid) {
+        await confirmTransaction(tid);
+    }
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[120px]" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px]" />
+        <div className="max-w-md w-full text-center space-y-6">
+            <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mx-auto animate-bounce-subtle">
+                <CheckCircle className="h-12 w-12 text-green-600" />
             </div>
 
-            <Card className="w-full max-w-md relative z-10 border-green-500/50">
-                <CardContent className="pt-8 pb-6 text-center">
-                    <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle className="h-10 w-10 text-green-500" />
-                    </div>
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold">Thanh Toán Thành Công!</h1>
+                <p className="text-muted-foreground">
+                    Cảm ơn bạn đã ủng hộ Creator. Giao dịch {tid ? `#${tid.slice(-6)}` : ''} đã được ghi nhận.
+                </p>
+            </div>
 
-                    <h1 className="text-2xl font-bold mb-2">Thanh Toán Thành Công!</h1>
-                    <p className="text-muted-foreground mb-6">
-                        Cảm ơn bạn đã ủng hộ creator. Đóng góp của bạn rất có ý nghĩa!
-                    </p>
+            <div className="flex flex-col gap-3 pt-4">
+                <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
+                    <Link href="/">Về Trang Chủ</Link>
+                </Button>
+                <Button asChild variant="outline">
+                    <Link href="/explore">Tiếp Tục Khám Phá</Link>
+                </Button>
+            </div>
+        </div>
+    );
+}
 
-                    <div className="flex flex-col gap-3">
-                        <Button asChild>
-                            <Link href="/explore">
-                                <Heart className="mr-2 h-4 w-4" />
-                                Khám Phá Thêm
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/">Về Trang Chủ</Link>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
+    const { tid } = await searchParams;
+
+    return (
+        <div className="container min-h-screen flex items-center justify-center py-20">
+            <Suspense fallback={<div>Đang xác nhận giao dịch...</div>}>
+                <SuccessContent tid={tid} />
+            </Suspense>
         </div>
     );
 }

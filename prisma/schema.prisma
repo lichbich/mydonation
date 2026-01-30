@@ -1,41 +1,175 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
+
+// NOTE: Enums removed for SQLite compatibility stability. Using Strings instead.
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String
   username      String    @unique
   email         String    @unique
   emailVerified DateTime?
-  password      String
+  passwordHash  String
   image         String?
   bio           String?
+  role          String    @default("FAN") // "CREATOR" | "FAN"
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Creator profile
-  isCreator       Boolean @default(false)
-  creatorTitle    String?
-  creatorBio      String?
-  creatorCoverUrl String?
-  socialLinks     String? // JSON string for social links
+  // NextAuth relations
+  accounts      Account[]
+  sessions      Session[]
 
-  // Relations
-  actionCards ActionCard[]
-  donations   Donation[]   @relation("SupporterDonations")
-  received    Donation[]   @relation("CreatorDonations")
-  sessions    Session[]
-  accounts    Account[]
+  // App relations
+  creatorProfile CreatorProfile?
+  
+  // As Creator
+  posts           Post[]
+  galleryItems    GalleryItem[]
+  actionCards     ActionCard[]
+  membershipTiers MembershipTier[]
+  receivedSupport SupportTransaction[] @relation("CreatorReceived")
+  receivedRequests Request[]           @relation("CreatorReceivedRequest")
+
+  // As Fan
+  sentSupport     SupportTransaction[] @relation("FanSent")
+  sentRequests    Request[]            @relation("FanSentRequest")
+  subscriptions   MemberSubscription[]
+  
+  // As Creator Members
+  members         MemberSubscription[] @relation("CreatorMembers")
 }
+
+model MemberSubscription {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creatorId      String
+  creator        User           @relation("CreatorMembers", fields: [creatorId], references: [id], onDelete: Cascade)
+  tierId         String
+  tier           MembershipTier @relation(fields: [tierId], references: [id])
+  
+  status         String         @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  currentPeriodEnd DateTime
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([userId, creatorId])
+}
+
+model CreatorProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline    String?
+  coverImage  String?
+  socialLinks String?  // Stored as JSON string
+  accentColor String   @default("#000000")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  creatorId   String
+  creator     User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  visibility  String     @default("PUBLIC") // "PUBLIC" | "MEMBERS"
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model GalleryItem {
+  id          String     @id @default(cuid())
+  creatorId   String
+  creator     User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  type        String     // "IMAGE" | "VIDEO"
+  title       String?
+  url         String
+  visibility  String     @default("PUBLIC")
+  
+  createdAt   DateTime   @default(now())
+}
+
+model ActionCard {
+  id          String   @id @default(cuid())
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  price       Int
+  icon        String?
+  isFeatured  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  transactions SupportTransaction[]
+}
+
+model MembershipTier {
+  id                String   @id @default(cuid())
+  creatorId         String
+  creator           User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  priceMonthlyCents Int
+  perks             String   // Stored as JSON string list
+  isActive          Boolean  @default(true)
+  
+  subscriptions     MemberSubscription[]
+
+  createdAt         DateTime @default(now())
+}
+
+model SupportTransaction {
+  id           String            @id @default(cuid())
+  creatorId    String
+  creator      User              @relation("CreatorReceived", fields: [creatorId], references: [id])
+  fanId        String?
+  fan          User?             @relation("FanSent", fields: [fanId], references: [id])
+  actionCardId String?
+  actionCard   ActionCard?       @relation(fields: [actionCardId], references: [id])
+  
+  amountCents     Int
+  message         String?
+  guestName       String?
+  isAnonymous     Boolean   @default(false)
+  status          String    @default("PENDING") // PENDING, SUCCESS, CANCEL"
+  
+  createdAt    DateTime          @default(now())
+}
+
+model Request {
+  id          String        @id @default(cuid())
+  creatorId   String
+  creator     User          @relation("CreatorReceivedRequest", fields: [creatorId], references: [id])
+  fanId       String?
+  fan         User?         @relation("FanSentRequest", fields: [fanId], references: [id])
+  
+  type        String        @default("OTHER") // "COMMISSION" | "SHOUTOUT" | "FAN_CONSULT" | "OTHER"
+  budgetCents Int
+  deadline    DateTime?
+  description String
+  status      String        @default("NEW") // "NEW" | "IN_PROGRESS" | "DONE" | "REJECTED"
+  guestName   String?
+  guestEmail  String?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// --- NextAuth Models ---
 
 model Account {
   id                String  @id @default(cuid())
@@ -70,42 +204,4 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-}
-
-model ActionCard {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  price       Float
-  emoji       String   @default("☕")
-  color       String   @default("#FF5E5B")
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  creatorId String
-  creator   User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  donations Donation[]
-}
-
-model Donation {
-  id              String   @id @default(cuid())
-  amount          Float
-  quantity        Int      @default(1)
-  message         String?
-  isAnonymous     Boolean  @default(false)
-  status          String   @default("pending") // pending, completed, cancelled, refunded
-  paymentIntentId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  actionCardId String
-  actionCard   ActionCard @relation(fields: [actionCardId], references: [id])
-  supporterId  String?
-  supporter    User?      @relation("SupporterDonations", fields: [supporterId], references: [id])
-  creatorId    String
-  creator      User       @relation("CreatorDonations", fields: [creatorId], references: [id])
 }

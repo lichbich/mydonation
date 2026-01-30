@@ -1,301 +1,200 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
-    console.log("🌱 Seeding database...");
+    console.log('🌱 Starting seed...')
 
-    // Clean existing data
-    await prisma.donation.deleteMany();
-    await prisma.actionCard.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.user.deleteMany();
+    // Hash the demo password
+    const hashedPassword = await bcrypt.hash('123456', 10)
 
-    // Create demo creators
-    const creator1 = await prisma.user.create({
+    // 1. Create Creators
+    // Creator 1: Gamer/Streamer
+    const creator1 = await prisma.user.upsert({
+        where: { username: 'duna_gamer' },
+        update: {},
+        create: {
+            name: 'Dũng CT',
+            username: 'duna_gamer',
+            email: 'dungct@demo.com',
+            passwordHash: hashedPassword, // Properly hashed password
+            image: 'https://ui-avatars.com/api/?name=Dung+CT&background=0D8ABC&color=fff',
+            bio: 'Streamer game kinh dị số 1 Việt Nam (tự phong).',
+            role: 'CREATOR',
+            creatorProfile: {
+                create: {
+                    headline: 'Full-time Streamer & Youtuber',
+                    accentColor: '#ef4444',
+                    socialLinks: JSON.stringify({
+                        youtube: 'https://youtube.com',
+                        facebook: 'https://facebook.com',
+                        discord: 'https://discord.gg'
+                    })
+                }
+            }
+        }
+    })
+
+    // Creator 2: Digital Artist
+    const creator2 = await prisma.user.upsert({
+        where: { username: 'minh_art' },
+        update: {},
+        create: {
+            name: 'Minh Họa',
+            username: 'minh_art',
+            email: 'minhart@demo.com',
+            passwordHash: hashedPassword,
+            image: 'https://ui-avatars.com/api/?name=Minh+Hoa&background=db2777&color=fff',
+            bio: 'Vẽ vời linh tinh, nhận commission.',
+            role: 'CREATOR',
+            creatorProfile: {
+                create: {
+                    headline: 'Concept Artist & Illustrator',
+                    accentColor: '#db2777',
+                    socialLinks: JSON.stringify({
+                        instagram: 'https://instagram.com',
+                        twitter: 'https://twitter.com'
+                    })
+                }
+            }
+        }
+    })
+
+    // Fan User
+    const fan = await prisma.user.upsert({
+        where: { username: 'fan_boy_99' },
+        update: {},
+        create: {
+            name: 'Fan Cứng 99',
+            username: 'fan_boy_99',
+            email: 'fan@demo.com',
+            passwordHash: hashedPassword,
+            image: 'https://ui-avatars.com/api/?name=Fan+Boy&background=random',
+            role: 'FAN'
+        }
+    })
+
+    // 2. Action Cards
+    // Dũng CT
+    await prisma.actionCard.createMany({
+        data: [
+            { creatorId: creator1.id, title: 'Tặng 1 ly cafe', price: 20000, icon: '☕', description: 'Giúp tôi tỉnh táo stream game' },
+            { creatorId: creator1.id, title: 'Tặng Pizza', price: 150000, icon: '🍕', description: 'Đói quá anh em ơi', isFeatured: true },
+            { creatorId: creator1.id, title: 'Donate mua game mới', price: 500000, icon: '🎮', description: 'Để mua Resident Evil 9' },
+        ]
+    })
+
+    // Minh Art
+    await prisma.actionCard.createMany({
+        data: [
+            { creatorId: creator2.id, title: 'Sketch nhanh', price: 50000, icon: '✏️', description: 'Cảm ơn bạn đã ủng hộ nét vẽ' },
+            { creatorId: creator2.id, title: 'Mua cọ vẽ mới', price: 100000, icon: '🖌️', isFeatured: true },
+            { creatorId: creator2.id, title: 'Nuôi mèo béo', price: 20000, icon: '🐱', description: 'Tiền pate cho Boss' },
+        ]
+    })
+
+    // 3. Posts
+    await prisma.post.create({
         data: {
-            name: "Nguyễn Văn A",
-            username: "nguyenvana",
-            email: "nguyenvana@demo.com",
-            password: "123456",
-            bio: "Lập trình viên & Content Creator",
-            isCreator: true,
-            creatorTitle: "Tech YouTuber",
-            creatorBio: "Chia sẻ kiến thức lập trình và công nghệ mới nhất. Mỗi video là một bài học giúp bạn tiến gần hơn đến ước mơ!",
-            image: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenvana",
-            socialLinks: JSON.stringify({
-                youtube: "https://youtube.com/@nguyenvana",
-                twitter: "https://twitter.com/nguyenvana",
-                website: "https://nguyenvana.dev",
-            }),
-        },
-    });
+            creatorId: creator1.id,
+            title: 'Lịch stream tuần này',
+            content: '# Lịch Stream\n\n- Thứ 2: Game kinh dị\n- Thứ 4: Talkshow\n- Thứ 6: Game mới',
+            visibility: 'PUBLIC'
+        }
+    })
 
-    const creator2 = await prisma.user.create({
+    await prisma.post.createMany({
+        data: [
+            { creatorId: creator1.id, title: 'Review con game rác đêm qua', content: 'Game gì mà lỗi tùm lum...', visibility: 'MEMBERS' },
+            { creatorId: creator2.id, title: 'WIP dự án mới', content: 'Đang vẽ dở, leak cho anh em xem trước.', visibility: 'MEMBERS' }
+        ]
+    })
+
+    // 4. Gallery Items
+    await prisma.galleryItem.createMany({
+        data: [
+            { creatorId: creator2.id, type: 'IMAGE', url: 'https://picsum.photos/seed/art1/800/600', title: 'Concept Art #1' },
+            { creatorId: creator2.id, type: 'IMAGE', url: 'https://picsum.photos/seed/art2/800/600', title: 'Character Design' },
+            { creatorId: creator2.id, type: 'IMAGE', url: 'https://picsum.photos/seed/art3/800/600', title: 'Landscape', visibility: 'MEMBERS' },
+            { creatorId: creator1.id, type: 'VIDEO', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'Highlight Stream hôm qua' },
+            { creatorId: creator1.id, type: 'IMAGE', url: 'https://picsum.photos/seed/game1/800/600', title: 'Setup góc máy mới' },
+            { creatorId: creator1.id, type: 'IMAGE', url: 'https://picsum.photos/seed/game2/800/600', title: 'Offline cùng fan' },
+        ]
+    })
+
+    // 5. Membership Tiers
+    await prisma.membershipTier.createMany({
+        data: [
+            { creatorId: creator1.id, title: 'Fan Cứng', priceMonthlyCents: 50000, perks: JSON.stringify(['Huy hiệu fan cứng', 'Xem post thành viên']) },
+            { creatorId: creator2.id, title: 'Supporter', priceMonthlyCents: 30000, perks: JSON.stringify(['Truy cập thư viện sketch', 'Quyền ưu tiên request']) },
+            { creatorId: creator2.id, title: 'VIP Art Collector', priceMonthlyCents: 200000, perks: JSON.stringify(['Nhận file PSD gốc', 'Video process']) },
+        ]
+    })
+
+    // 6. Support Transactions
+    const dunaActionCards = await prisma.actionCard.findMany({ where: { creatorId: creator1.id } })
+    const minhActionCards = await prisma.actionCard.findMany({ where: { creatorId: creator2.id } })
+
+    if (dunaActionCards.length > 0) {
+        await prisma.supportTransaction.create({
+            data: {
+                creatorId: creator1.id,
+                fanId: fan.id,
+                actionCardId: dunaActionCards[0].id,
+                amountCents: dunaActionCards[0].price,
+                message: 'Stream vui vẻ nha anh!',
+                status: 'SUCCESS'
+            }
+        })
+    }
+
+    if (minhActionCards.length > 0) {
+        await prisma.supportTransaction.create({
+            data: {
+                creatorId: creator2.id,
+                fanId: null, // Anonymous
+                actionCardId: minhActionCards[1].id,
+                amountCents: minhActionCards[1].price * 2, // Donate double
+                message: 'Tranh đẹp quá, tặng bạn thêm cái cọ nữa.',
+                status: 'SUCCESS'
+            }
+        })
+    }
+
+    // 7. Requests
+    await prisma.request.create({
         data: {
-            name: "Trần Thị B",
-            username: "tranthib",
-            email: "tranthib@demo.com",
-            password: "123456",
-            bio: "Blogger & Podcaster",
-            isCreator: true,
-            creatorTitle: "Podcast Host",
-            creatorBio: "Podcast về cuộc sống, sự nghiệp và phát triển bản thân. Mỗi tập là một câu chuyện truyền cảm hứng!",
-            image: "https://api.dicebear.com/7.x/avataaars/svg?seed=tranthib",
-            socialLinks: JSON.stringify({
-                instagram: "https://instagram.com/tranthib",
-                facebook: "https://facebook.com/tranthib",
-            }),
-        },
-    });
+            creatorId: creator2.id,
+            fanId: fan.id,
+            type: 'COMMISSION',
+            budgetCents: 500000,
+            description: 'Vẽ giúp mình avatar phong cách anime cho kênh Youtube của mình.',
+            status: 'NEW'
+        }
+    })
 
-    const creator3 = await prisma.user.create({
+    await prisma.request.create({
         data: {
-            name: "Lê Văn C",
-            username: "levanc",
-            email: "levanc@demo.com",
-            password: "123456",
-            bio: "Game Developer & Streamer",
-            isCreator: true,
-            creatorTitle: "Indie Game Dev",
-            creatorBio: "Phát triển game indie và stream gameplay. Đang làm việc trên một dự án RPG thú vị!",
-            image: "https://api.dicebear.com/7.x/avataaars/svg?seed=levanc",
-            socialLinks: JSON.stringify({
-                youtube: "https://youtube.com/@levanc",
-                twitter: "https://twitter.com/levanc",
-            }),
-        },
-    });
+            creatorId: creator1.id,
+            fanId: fan.id,
+            type: 'SHOUTOUT',
+            budgetCents: 100000,
+            deadline: new Date('2024-12-31'),
+            description: 'Chúc mừng sinh nhật bạn gái mình tên là Lan trên stream nhé.',
+            status: 'DONE'
+        }
+    })
 
-    // Create demo supporter
-    const supporter = await prisma.user.create({
-        data: {
-            name: "Người Ủng Hộ",
-            username: "supporter",
-            email: "supporter@demo.com",
-            password: "123456",
-            image: "https://api.dicebear.com/7.x/avataaars/svg?seed=supporter",
-        },
-    });
-
-    // Create Action Cards for creator1
-    const actionCards1 = await Promise.all([
-        prisma.actionCard.create({
-            data: {
-                title: "Mua Cà Phê",
-                description: "Giúp mình tỉnh táo để làm video chất lượng hơn!",
-                price: 25000,
-                emoji: "☕",
-                color: "#8B4513",
-                creatorId: creator1.id,
-                sortOrder: 0,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Sponsor Video",
-                description: "Đăng ký sponsor cho một video YouTube của mình",
-                price: 500000,
-                emoji: "🎬",
-                color: "#FF0000",
-                creatorId: creator1.id,
-                sortOrder: 1,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Mua Thiết Bị",
-                description: "Góp vào quỹ nâng cấp thiết bị quay video",
-                price: 100000,
-                emoji: "🎥",
-                color: "#4A90D9",
-                creatorId: creator1.id,
-                sortOrder: 2,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Super Thanks",
-                description: "Cảm ơn đặc biệt - Tên bạn sẽ xuất hiện trong video!",
-                price: 200000,
-                emoji: "⭐",
-                color: "#FFD700",
-                creatorId: creator1.id,
-                sortOrder: 3,
-            },
-        }),
-    ]);
-
-    // Create Action Cards for creator2
-    const actionCards2 = await Promise.all([
-        prisma.actionCard.create({
-            data: {
-                title: "Trà Sữa",
-                description: "Một ly trà sữa để mình có năng lượng làm podcast!",
-                price: 35000,
-                emoji: "🧋",
-                color: "#DEB887",
-                creatorId: creator2.id,
-                sortOrder: 0,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Thuê Studio",
-                description: "Góp vào tiền thuê studio thu âm chuyên nghiệp",
-                price: 150000,
-                emoji: "🎙️",
-                color: "#9B59B6",
-                creatorId: creator2.id,
-                sortOrder: 1,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Ủng Hộ Tháng",
-                description: "Ủng hộ cố định hàng tháng để podcast phát triển",
-                price: 99000,
-                emoji: "💜",
-                color: "#E91E63",
-                creatorId: creator2.id,
-                sortOrder: 2,
-            },
-        }),
-    ]);
-
-    // Create Action Cards for creator3
-    const actionCards3 = await Promise.all([
-        prisma.actionCard.create({
-            data: {
-                title: "Energy Drink",
-                description: "Mua nước tăng lực cho những đêm code game",
-                price: 20000,
-                emoji: "⚡",
-                color: "#00FF00",
-                creatorId: creator3.id,
-                sortOrder: 0,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Asset Pack",
-                description: "Mua asset để làm game đẹp hơn",
-                price: 250000,
-                emoji: "🎮",
-                color: "#7C3AED",
-                creatorId: creator3.id,
-                sortOrder: 1,
-            },
-        }),
-        prisma.actionCard.create({
-            data: {
-                title: "Cloud Server",
-                description: "Góp tiền server để game online không lag",
-                price: 300000,
-                emoji: "☁️",
-                color: "#3B82F6",
-                creatorId: creator3.id,
-                sortOrder: 2,
-            },
-        }),
-    ]);
-
-    // Create demo donations
-    const donations = await Promise.all([
-        prisma.donation.create({
-            data: {
-                amount: 25000,
-                quantity: 1,
-                message: "Video rất hay, cảm ơn bạn!",
-                status: "completed",
-                actionCardId: actionCards1[0].id,
-                creatorId: creator1.id,
-                supporterId: supporter.id,
-                paymentIntentId: "mock_pi_1",
-            },
-        }),
-        prisma.donation.create({
-            data: {
-                amount: 75000,
-                quantity: 3,
-                message: "Chúc kênh ngày càng phát triển! 🎉",
-                status: "completed",
-                actionCardId: actionCards1[0].id,
-                creatorId: creator1.id,
-                supporterId: supporter.id,
-                paymentIntentId: "mock_pi_2",
-            },
-        }),
-        prisma.donation.create({
-            data: {
-                amount: 500000,
-                quantity: 1,
-                message: "Sponsor cho video tiếp theo nhé!",
-                status: "completed",
-                actionCardId: actionCards1[1].id,
-                creatorId: creator1.id,
-                supporterId: null,
-                isAnonymous: true,
-                paymentIntentId: "mock_pi_3",
-            },
-        }),
-        prisma.donation.create({
-            data: {
-                amount: 35000,
-                quantity: 1,
-                message: "Podcast rất hay, nghe mỗi ngày!",
-                status: "completed",
-                actionCardId: actionCards2[0].id,
-                creatorId: creator2.id,
-                supporterId: supporter.id,
-                paymentIntentId: "mock_pi_4",
-            },
-        }),
-        prisma.donation.create({
-            data: {
-                amount: 99000,
-                quantity: 1,
-                message: "Ủng hộ podcast hàng tháng! 💜",
-                status: "completed",
-                actionCardId: actionCards2[2].id,
-                creatorId: creator2.id,
-                supporterId: supporter.id,
-                paymentIntentId: "mock_pi_5",
-            },
-        }),
-        prisma.donation.create({
-            data: {
-                amount: 60000,
-                quantity: 3,
-                message: "Chờ game mới ra!",
-                status: "completed",
-                actionCardId: actionCards3[0].id,
-                creatorId: creator3.id,
-                supporterId: supporter.id,
-                paymentIntentId: "mock_pi_6",
-            },
-        }),
-    ]);
-
-    console.log("✅ Seed complete!");
-    console.log(`   - Created ${3} creators`);
-    console.log(`   - Created ${1} supporter`);
-    console.log(`   - Created ${actionCards1.length + actionCards2.length + actionCards3.length} action cards`);
-    console.log(`   - Created ${donations.length} donations`);
-    console.log("");
-    console.log("📝 Demo accounts:");
-    console.log("   Creator 1: nguyenvana@demo.com / 123456");
-    console.log("   Creator 2: tranthib@demo.com / 123456");
-    console.log("   Creator 3: levanc@demo.com / 123456");
-    console.log("   Supporter: supporter@demo.com / 123456");
+    console.log('✅ Seed completed successfully!')
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
+    .then(async () => {
+        await prisma.$disconnect()
     })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+    .catch(async (e) => {
+        console.error(e)
+        await prisma.$disconnect()
+        process.exit(1)
+    })

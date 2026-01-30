@@ -2,6 +2,10 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Users, TrendingUp, CreditCard } from "lucide-react";
+import { getDashboardStats } from "@/lib/actions/dashboard/stats";
+import { formatCurrency } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export const metadata = {
     title: "Dashboard",
@@ -14,11 +18,33 @@ export default async function DashboardPage() {
         redirect("/auth/login");
     }
 
+    const data = await getDashboardStats();
+
     const stats = [
-        { label: "Donations", value: "0", icon: Heart, color: "text-primary" },
-        { label: "Supporters", value: "0", icon: Users, color: "text-pink-500" },
-        { label: "Thu Nhập", value: "₫0", icon: TrendingUp, color: "text-green-500" },
-        { label: "Action Cards", value: "0", icon: CreditCard, color: "text-purple-500" },
+        {
+            label: "Donations",
+            value: data?.totalDonations?.toString() || "0",
+            icon: Heart,
+            color: "text-primary"
+        },
+        {
+            label: "Supporters",
+            value: data?.supporterCount?.toString() || "0",
+            icon: Users,
+            color: "text-pink-500"
+        },
+        {
+            label: "Thu Nhập",
+            value: formatCurrency(data?.totalEarnings || 0),
+            icon: TrendingUp,
+            color: "text-green-500"
+        },
+        {
+            label: "Action Cards",
+            value: data?.actionCardsCount?.toString() || "0",
+            icon: CreditCard,
+            color: "text-purple-500"
+        },
     ];
 
     return (
@@ -60,19 +86,63 @@ export default async function DashboardPage() {
                         <CardTitle>Hoạt Động Gần Đây</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center py-8 text-muted-foreground">
-                            <p>Chưa có hoạt động nào</p>
-                        </div>
+                        {data?.recentTransactions && data.recentTransactions.length > 0 ? (
+                            <div className="space-y-4">
+                                {data.recentTransactions.map((tx: any) => (
+                                    <div key={tx.id} className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span className="text-lg">{tx.actionCard?.icon || "💝"}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium truncate">
+                                                {tx.fan?.name || tx.guestName || "Ẩn danh"}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {tx.actionCard?.title || "Ủng hộ"}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold text-green-600">
+                                                +{formatCurrency(tx.amountCents)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {formatDistanceToNow(new Date(tx.createdAt), {
+                                                    addSuffix: true,
+                                                    locale: vi
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <p>Chưa có hoạt động nào</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Donations Mới</CardTitle>
+                        <CardTitle>Thông Tin Nhanh</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center py-8 text-muted-foreground">
-                            <p>Chưa có donation nào</p>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                                <span className="text-muted-foreground">Tổng thu nhập</span>
+                                <span className="font-bold text-green-600">
+                                    {formatCurrency(data?.totalEarnings || 0)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                                <span className="text-muted-foreground">Số người ủng hộ</span>
+                                <span className="font-bold">{data?.supporterCount || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                                <span className="text-muted-foreground">Tổng donations</span>
+                                <span className="font-bold">{data?.totalDonations || 0}</span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -80,3 +150,4 @@ export default async function DashboardPage() {
         </div>
     );
 }
+

@@ -21,10 +21,13 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(loginUrl);
         }
 
-        // Check if user is a creator for dashboard routes
-        if (pathname.startsWith("/dashboard")) {
+        // Creator-only dashboard routes
+        const creatorOnlyRoutes = ["/dashboard/actions", "/dashboard/posts", "/dashboard/gallery", "/dashboard/tiers", "/dashboard/requests", "/dashboard/earnings"];
+        const isCreatorOnlyRoute = creatorOnlyRoutes.some((route) => pathname.startsWith(route));
+
+        if (isCreatorOnlyRoute) {
             const user = session.user as any;
-            if (!user.isCreator) {
+            if (user.role !== "CREATOR") {
                 return NextResponse.redirect(new URL("/", request.url));
             }
         }

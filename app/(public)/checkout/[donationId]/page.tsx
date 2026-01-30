@@ -9,22 +9,36 @@ interface CheckoutPageProps {
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
     const { donationId } = await params;
 
-    const donation = await prisma.donation.findUnique({
+    const transaction = await prisma.supportTransaction.findUnique({
         where: { id: donationId },
         include: {
             actionCard: true,
             creator: true,
-            supporter: true,
+            fan: true,
         },
     });
 
-    if (!donation) {
+    if (!transaction) {
         notFound();
     }
 
-    if (donation.status === "completed") {
-        redirect("/checkout/success");
+    if (transaction.status === "SUCCESS") { // status is pending success cancel
+        redirect("/checkout/success"); // need to implement this page too or handle in simulator
     }
 
-    return <PaymentSimulator donation={donation} />;
+    // Map data to match PaymentSimulator expectation (which expects 'donation' object)
+    const donationData = {
+        id: transaction.id,
+        amount: transaction.amountCents,
+        creator: {
+            name: transaction.creator.name,
+            username: transaction.creator.username,
+        }
+    };
+
+    return (
+        <div className="container py-20 min-h-screen flex items-center justify-center">
+            <PaymentSimulator donation={donationData} />
+        </div>
+    );
 }

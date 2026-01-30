@@ -1,24 +1,27 @@
-import { User, ActionCard, Donation } from "@prisma/client";
+import { User, ActionCard, SupportTransaction } from "@prisma/client";
 
 export type UserWithRelations = User & {
     actionCards?: ActionCard[];
-    donations?: DonationWithRelations[];
-    received?: DonationWithRelations[];
+    sentSupport?: SupportTransactionWithRelations[];
+    receivedSupport?: SupportTransactionWithRelations[];
 };
 
 export type ActionCardWithRelations = ActionCard & {
     creator?: User;
-    donations?: Donation[];
+    transactions?: SupportTransaction[];
     _count?: {
-        donations: number;
+        transactions: number;
     };
 };
 
-export type DonationWithRelations = Donation & {
+export type SupportTransactionWithRelations = SupportTransaction & {
     actionCard?: ActionCard;
-    supporter?: User | null;
+    fan?: User | null;
     creator?: User;
 };
+
+// Alias for backward compatibility
+export type DonationWithRelations = SupportTransactionWithRelations;
 
 export type CreatorProfile = {
     id: string;
@@ -31,7 +34,7 @@ export type CreatorProfile = {
     creatorCoverUrl: string | null;
     socialLinks: SocialLinks | null;
     actionCards: ActionCardWithRelations[];
-    recentDonations: DonationWithRelations[];
+    recentDonations: SupportTransactionWithRelations[];
     stats: CreatorStats;
 };
 
@@ -59,3 +62,4 @@ export type CheckoutData = {
     supporterEmail?: string;
     supporterName?: string;
 };
+
