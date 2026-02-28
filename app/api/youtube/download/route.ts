@@ -1,24 +1,18 @@
 import { NextResponse } from "next/server";
+import play from "play-dl";
 // @ts-ignore
 import ytdl from "ytdl-core-enhanced";
 import { Readable } from "stream";
 
 export const maxDuration = 60;
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-// Helper to convert Node.js Readable stream to Web stream
-function nodeStreamToWebStream(nodeStream: Readable) {
+function nodeStreamToWebStream(nodeStream: Readable): ReadableStream {
     return new ReadableStream({
         start(controller) {
-            nodeStream.on("data", (chunk) => {
-                controller.enqueue(new Uint8Array(chunk));
-            });
-            nodeStream.on("end", () => {
-                controller.close();
-            });
-            nodeStream.on("error", (err) => {
-                controller.error(err);
-            });
+            nodeStream.on("data", (chunk) => controller.enqueue(new Uint8Array(chunk)));
+            nodeStream.on("end", () => controller.close());
+            nodeStream.on("error", (err) => controller.error(err));
         },
         cancel() {
             nodeStream.destroy();
@@ -26,97 +20,82 @@ function nodeStreamToWebStream(nodeStream: Readable) {
     });
 }
 
+/**
+ * play.stream() requires www.youtube.com — without it, Node.js throws ERR_INVALID_URL
+ * internally inside play-dl's URL validator.
+ */
+function normalizeYTUrl(url: string): string {
+    return url.replace(/^https?:\/\/(?!www\.)youtube\.com/, "https://www.youtube.com");
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get("url");
-    const format = searchParams.get("format"); // e.g., 'mp4', 'mp3', '1080p', '720p'
+    const itagStr = searchParams.get("itag");
+    const format = searchParams.get("format");
 
-    if (!url || !ytdl.validateURL(url)) {
-        return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+    if (!url) {
+        return NextResponse.json({ error: "Missing URL" }, { status: 400 });
     }
 
+    const isAudio = format === "audio" || format === "mp3";
+    const normalizedUrl = normalizeYTUrl(url);
+
     try {
-        const info = await ytdl.getInfo(url);
-        let selectedFormat;
-        let contentType = "video/mp4";
-        let extension = "mp4";
+        // Fetch metadata for filename (play-dl works everywhere)
+        const info = await play.video_info(normalizedUrl);
+        const safeTitle = (info.video_details.title ?? "download")
+            .replace(/[\/\?<>\\:\*\|":]/g, "_")
+            .trim();
 
-        const itag = searchParams.get("itag");
+        if (isAudio) {
+            // ── AUDIO via play.stream() ────────────────────────────────────
+            // play.stream() handles its own deciphering — does NOT use the
+            // format URLs from video_info (which are sefc=1 restricted).
+            // URL MUST be www.youtube.com — normalizeYTUrl() ensures this.
+            const streamData = await play.stream(normalizedUrl);
+            const filename = encodeURIComponent(`${safeTitle}.mp3`);
 
-        if (itag) {
-            selectedFormat = info.formats.find((f: any) => f.itag === parseInt(itag, 10));
-        } else if (format === "mp3" || format === "audio") {
-            // Find highest audio format, prefer mp4/m4a container
-            const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-            selectedFormat = audioFormats.find((f: any) => f.container === 'mp4') || audioFormats[0];
+            return new Response(
+                nodeStreamToWebStream(streamData.stream as unknown as Readable),
+                {
+                    headers: {
+                        "Content-Type": "audio/mpeg",
+                        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${filename}`,
+                    },
+                }
+            );
         } else {
-            // Let's try to get video with audio combined
-            let qualityLabel = 'highest';
-            if (format === '1080p') qualityLabel = '137';
-            else if (format === '720p') qualityLabel = '136';
-            else if (format === '480p') qualityLabel = '135';
-            else if (format === '360p') qualityLabel = '18';
+            // ── VIDEO via ytdl-core-enhanced ───────────────────────────────
+            // play-dl's format URLs have sefc=1 (IP+POT-bound), so we cannot
+            // fetch them from the server. ytdl-core-enhanced streams directly
+            // and works correctly on localhost (user's IP, not a datacenter IP).
+            const itag = itagStr ? parseInt(itagStr, 10) : undefined;
+            const filename = encodeURIComponent(`${safeTitle}.mp4`);
 
-            selectedFormat = info.formats.find((f: any) => f.hasVideo && f.hasAudio && f.qualityLabel?.includes(format || ''));
-
-            if (!selectedFormat) {
-                selectedFormat = ytdl.chooseFormat(info.formats, { filter: 'videoandaudio' });
-            }
-            if (!selectedFormat) {
-                selectedFormat = ytdl.chooseFormat(info.formats, { quality: "highestvideo" });
-            }
-        }
-
-        if (selectedFormat) {
-            extension = selectedFormat.container || (selectedFormat.hasVideo ? "mp4" : "mp3");
-
-            // Map webm audio to mp3 or native webm depending on container, but let's encourage m4a/mp3
-            if ((extension === "webm" || extension === "weba" || extension === "m4a") && !selectedFormat.hasVideo) {
-                extension = "mp3";
-            }
-
-            contentType = selectedFormat.mimeType?.split(';')[0] || (selectedFormat.hasVideo ? "video/mp4" : "audio/mpeg");
-        }
-
-        if (!selectedFormat) {
-            return NextResponse.json({ error: "No suitable format found" }, { status: 404 });
-        }
-
-        const safeTitle = info.videoDetails.title.replace(/[\/\?<>\\:\*\|":]/g, "_");
-        const filename = encodeURIComponent(`${safeTitle}.${extension}`);
-
-        // Stream from YouTube
-        const stream = ytdl.downloadFromInfo(info, { format: selectedFormat });
-
-        let webStream;
-        if (typeof Readable.toWeb === 'function') {
-            webStream = Readable.toWeb(stream as any);
-        } else {
-            // Polyfill fallback just in case
-            webStream = new ReadableStream({
-                start(controller) {
-                    stream.on("data", (chunk: any) => controller.enqueue(new Uint8Array(chunk)));
-                    stream.on("end", () => controller.close());
-                    stream.on("error", (err: any) => controller.error(err));
+            const stream = ytdl(normalizedUrl, {
+                quality: itag ?? "highest",
+                filter: "videoandaudio",
+                requestOptions: {
+                    headers: {
+                        "User-Agent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                    },
                 },
-                cancel() {
-                    stream.destroy();
+            });
+
+            return new Response(nodeStreamToWebStream(stream as Readable), {
+                headers: {
+                    "Content-Type": "video/mp4",
+                    "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${filename}`,
                 },
             });
         }
-
-        const responseHeaders: any = {
-            "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${filename}`,
-            "Content-Type": contentType,
-        };
-
-        if (selectedFormat.contentLength) {
-            responseHeaders["Content-Length"] = selectedFormat.contentLength;
-        }
-
-        return new NextResponse(webStream as any, { headers: responseHeaders });
     } catch (error: any) {
-        console.error("YouTube Download API Error:", error);
-        return NextResponse.json({ error: "Lỗi tải video từ máy chủ" }, { status: 500 });
+        console.error("Download API Error:", error.message, error.code ?? "");
+        return NextResponse.json(
+            { error: error.message ?? "Unknown error", code: error.code ?? null },
+            { status: 500 }
+        );
     }
 }
