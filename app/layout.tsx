@@ -15,11 +15,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "MyLittleTool - Công Cụ Hữu Ích Dành Cho Bạn",
+    default: "MyLittleTool - Useful Tools For You",
     template: "%s | MyLittleTool",
   },
-  description: "Bộ công cụ tải video/audio Youtube và TikTok tiện lợi nhất",
+  description: "The most convenient toolkit for downloading YouTube and TikTok videos/audio",
   keywords: ["tools", "youtube", "tiktok", "downloader"],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className="dark">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >

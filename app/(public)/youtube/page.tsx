@@ -27,11 +27,11 @@ export default function YoutubeToolPage() {
 
     const handleAnalyze = async () => {
         if (!youtubeLink) {
-            toast.error("Vui lòng nhập link Youtube!");
+            toast.error("Please enter a YouTube link!");
             return;
         }
         if (!youtubeLink.includes("youtube.com") && !youtubeLink.includes("youtu.be")) {
-            toast.error("Link Youtube không hợp lệ!");
+            toast.error("Invalid YouTube link!");
             return;
         }
 
@@ -46,9 +46,9 @@ export default function YoutubeToolPage() {
             }
 
             setVideoData(data);
-            toast.success("Phân tích video thành công!");
+            toast.success("Video analyzed successfully!");
         } catch (error) {
-            toast.error("Lỗi khi kết nối hoặc phân tích URL");
+            toast.error("Error connecting or analyzing URL");
         } finally {
             setIsLoading(false);
         }
@@ -56,13 +56,13 @@ export default function YoutubeToolPage() {
 
     const handleDownloadFormat = (format: string) => {
         window.open(`https://ssyoutube.com/en?url=${encodeURIComponent(youtubeLink)}`, '_blank');
-        toast.success(`Đang mở trình tải video để lấy định dạng ${format}...`);
+        toast.success(`Opening video downloader to get format ${format}...`);
     };
 
     const handleDirectDownloadImage = (url: string) => {
         // Simple direct download trick
         window.open(url, "_blank");
-        toast.success("Mở hình ảnh tải về!");
+        toast.success("Opening image to download!");
     };
 
     return (
@@ -73,14 +73,14 @@ export default function YoutubeToolPage() {
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold">Youtube Tools</h1>
-                    <p className="text-muted-foreground">Tải video, lấy thumbnail, trích xuất tags và tạo mã QR</p>
+                    <p className="text-muted-foreground">Download videos, get thumbnails, extract tags and generate QR codes</p>
                 </div>
             </div>
 
             <Card className="mb-8 border-primary/20 bg-card/50 backdrop-blur-sm shadow-xl">
                 <CardHeader>
-                    <CardTitle>Dán link Youtube vào đây</CardTitle>
-                    <CardDescription>Hỗ trợ link từ youtube.com hoặc youtu.be</CardDescription>
+                    <CardTitle>Paste YouTube link here</CardTitle>
+                    <CardDescription>Supports links from youtube.com or youtu.be</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -97,7 +97,7 @@ export default function YoutubeToolPage() {
                             disabled={isLoading}
                             className="bg-red-600 hover:bg-red-700 text-white h-12 px-8"
                         >
-                            {isLoading ? "Đang xử lý..." : "Phân Tích"}
+                            {isLoading ? "Processing..." : "Analyze"}
                         </Button>
                     </div>
                 </CardContent>
@@ -107,24 +107,24 @@ export default function YoutubeToolPage() {
                 <Tabs defaultValue="download" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1 bg-muted/50 mb-6">
                         <TabsTrigger value="download" className="py-3 data-[state=active]:bg-red-500 data-[state=active]:text-white">
-                            <Download className="mr-2 h-4 w-4" /> Tải Video/Audio
+                            <Download className="mr-2 h-4 w-4" /> Download Video/Audio
                         </TabsTrigger>
                         <TabsTrigger value="thumbnail" className="py-3 data-[state=active]:bg-red-500 data-[state=active]:text-white">
                             <ImageIcon className="mr-2 h-4 w-4" /> Thumbnail
                         </TabsTrigger>
                         <TabsTrigger value="tags" className="py-3 data-[state=active]:bg-red-500 data-[state=active]:text-white">
-                            <Tags className="mr-2 h-4 w-4" /> Extractor Tags
+                            <Tags className="mr-2 h-4 w-4" /> Extract Tags
                         </TabsTrigger>
                         <TabsTrigger value="qrcode" className="py-3 data-[state=active]:bg-red-500 data-[state=active]:text-white">
-                            <QrCode className="mr-2 h-4 w-4" /> Tạo QR Code
+                            <QrCode className="mr-2 h-4 w-4" /> Generate QR Code
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="download" className="mt-0">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Tải Video & Audio</CardTitle>
-                                <CardDescription>Tải trực tiếp bằng máy chủ ẩn danh nội bộ, tốc độ cao không dính quảng cáo.</CardDescription>
+                                <CardTitle>Download Video & Audio</CardTitle>
+                                <CardDescription>Direct download using anonymous internal servers, high speed, and ad-free.</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col md:flex-row gap-6">
                                 <div className="w-full md:w-1/3 aspect-video bg-muted rounded-xl overflow-hidden relative group border shadow-sm">
@@ -139,12 +139,12 @@ export default function YoutubeToolPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                                         {videoData.formats && videoData.formats.video?.length > 0 ? (
                                             <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
-                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Download className="h-4 w-4" /> Video (Kèm Âm Thanh)</div>
+                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Download className="h-4 w-4" /> Video (With Audio)</div>
                                                 <div className="flex flex-col gap-2">
                                                     {videoData.formats.video.map((f: any) => (
                                                         <Button key={f.itag} asChild className="w-full text-md bg-red-600 hover:bg-red-700 text-white">
                                                             <Link href={`/api/youtube/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoData.id}`)}&itag=${f.itag}&format=${f.quality}`} target="_blank" download>
-                                                                Tải {f.quality} (MP4)
+                                                                Download {f.quality} (MP4)
                                                             </Link>
                                                         </Button>
                                                     ))}
@@ -153,20 +153,20 @@ export default function YoutubeToolPage() {
                                         ) : (
                                             <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
                                                 <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Download className="h-4 w-4 text-red-500" /> Video (MP4)</div>
-                                                <p className="text-sm text-muted-foreground">Không tìm thấy máy chủ cho định dạng MP4 có âm thanh.</p>
+                                                <p className="text-sm text-muted-foreground">No server found for MP4 format with audio.</p>
                                             </div>
                                         )}
 
                                         {videoData.formats && videoData.formats.audio?.length > 0 ? (
                                             <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
-                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Music className="h-4 w-4 text-pink-500" /> <span className="text-pink-500">Âm Thanh Lossless (Cần Donate)</span></div>
+                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Music className="h-4 w-4 text-pink-500" /> <span className="text-pink-500">Lossless Audio (Donate Required)</span></div>
                                                 <div className="flex flex-col gap-2">
                                                     {videoData.formats.audio.slice(0, 2).map((f: any) => {
                                                         const url = `/api/youtube/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoData.id}`)}&itag=${f.itag}&format=audio`;
                                                         return (
                                                             <Button key={f.itag} asChild variant="secondary" className="w-full border shadow-sm">
                                                                 <a href={url} onClick={(e) => handleAudioDonateRequired(e, url)}>
-                                                                    Tải Audio {f.quality} (MP3)
+                                                                    Download Audio {f.quality} (MP3)
                                                                 </a>
                                                             </Button>
                                                         )
@@ -175,10 +175,10 @@ export default function YoutubeToolPage() {
                                             </div>
                                         ) : (
                                             <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
-                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Music className="h-4 w-4 text-pink-500" /> <span className="text-pink-500">Âm Thanh (Cần Donate)</span></div>
+                                                <div className="flex items-center gap-2 font-semibold pb-2 border-b"><Music className="h-4 w-4 text-pink-500" /> <span className="text-pink-500">Audio (Donate Required)</span></div>
                                                 <Button asChild variant="secondary" className="w-full border shadow-sm">
                                                     <a href={`/api/youtube/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoData.id}`)}&format=audio`} onClick={(e) => handleAudioDonateRequired(e, `/api/youtube/download?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoData.id}`)}&format=audio`)}>
-                                                        Tải Âm Thanh (MP3)
+                                                        Download Audio (MP3)
                                                     </a>
                                                 </Button>
                                             </div>
@@ -188,9 +188,9 @@ export default function YoutubeToolPage() {
                                     <Dialog open={isDonateAudioOpen} onOpenChange={setIsDonateAudioOpen}>
                                         <DialogContent className="sm:max-w-md">
                                             <DialogHeader>
-                                                <DialogTitle className="flex items-center gap-2"><Heart className="h-5 w-5 text-pink-500 fill-pink-500" /> Mở khoá tính năng cao cấp</DialogTitle>
+                                                <DialogTitle className="flex items-center gap-2"><Heart className="h-5 w-5 text-pink-500 fill-pink-500" /> Unlock Premium Feature</DialogTitle>
                                                 <DialogDescription>
-                                                    Để tải Âm Thanh Chất Lượng Cao, người dùng cần ủng hộ (donate) để giúp duy trì máy chủ. Cảm ơn bạn rất nhiều!
+                                                    To download High-Quality Audio, users must donate to help maintain the server. Thank you very much!
                                                 </DialogDescription>
                                             </DialogHeader>
                                             <div className="flex justify-center py-4">
@@ -199,15 +199,15 @@ export default function YoutubeToolPage() {
                                                 </div>
                                             </div>
                                             <DialogFooter className="sm:justify-between items-center flex-row">
-                                                <Button variant="ghost" onClick={() => setIsDonateAudioOpen(false)}>Quay lại</Button>
+                                                <Button variant="ghost" onClick={() => setIsDonateAudioOpen(false)}>Go Back</Button>
                                                 <Button asChild className="bg-pink-600 hover:bg-pink-700 text-white shadow-lg" onClick={() => setIsDonateAudioOpen(false)}>
-                                                    <a href={pendingAudioUrl} download>Tôi đã ủng hộ, Tải Ngay</a>
+                                                    <a href={pendingAudioUrl} download>I have donated, Download Now</a>
                                                 </Button>
                                             </DialogFooter>
                                         </DialogContent>
                                     </Dialog>
                                     <p className="text-xs text-muted-foreground mt-2 italic shadow-sm p-3 bg-muted/50 rounded-lg border-l-2 border-primary">
-                                        *Hệ thống tự động sử dụng Endpoint Proxy của trang web để kéo trực tiếp luồng stream chất lượng cao nhất cho phép tải mà không cần tới phần mềm thứ ba.
+                                        *The system automatically uses the website's Endpoint Proxy to pull the highest quality stream allowing direct download without third-party software.
                                     </p>
                                 </div>
                             </CardContent>
@@ -217,8 +217,8 @@ export default function YoutubeToolPage() {
                     <TabsContent value="thumbnail" className="mt-0">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Ảnh bìa (Thumbnail)</CardTitle>
-                                <CardDescription>Xem và tải xuống ảnh bìa ở các độ phân giải khác nhau</CardDescription>
+                                <CardTitle>Thumbnail</CardTitle>
+                                <CardDescription>View and download thumbnails in different resolutions</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-6">
@@ -227,13 +227,13 @@ export default function YoutubeToolPage() {
                                     </div>
                                     <div className="flex flex-wrap justify-center gap-3">
                                         <Button onClick={() => handleDirectDownloadImage(`https://img.youtube.com/vi/${videoData.id}/maxresdefault.jpg`)} variant="outline">
-                                            Mở Max Res (HD)
+                                            Open Max Res (HD)
                                         </Button>
                                         <Button onClick={() => handleDirectDownloadImage(`https://img.youtube.com/vi/${videoData.id}/hqdefault.jpg`)} variant="outline">
-                                            Mở Standard
+                                            Open Standard
                                         </Button>
                                         <Button onClick={() => handleDirectDownloadImage(`https://img.youtube.com/vi/${videoData.id}/default.jpg`)} variant="outline">
-                                            Mở Kích Thước Nhỏ
+                                            Open Small Size
                                         </Button>
                                     </div>
                                 </div>
@@ -244,8 +244,8 @@ export default function YoutubeToolPage() {
                     <TabsContent value="tags" className="mt-0">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Từ khóa (Tags)</CardTitle>
-                                <CardDescription>Danh sách các từ khóa được sử dụng trong video này</CardDescription>
+                                <CardTitle>Tags</CardTitle>
+                                <CardDescription>List of tags used in this video</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {videoData.tags && videoData.tags.length > 0 ? (
@@ -260,15 +260,15 @@ export default function YoutubeToolPage() {
                                         <div className="mt-4 flex justify-end">
                                             <Button variant="secondary" onClick={() => {
                                                 navigator.clipboard.writeText(videoData.tags.join(", "));
-                                                toast.success("Đã copy toàn bộ tags!");
+                                                toast.success("All tags copied!");
                                             }}>
-                                                Copy Tất Cả Tags
+                                                Copy All Tags
                                             </Button>
                                         </div>
                                     </>
                                 ) : (
                                     <div className="p-8 text-center text-muted-foreground border rounded-xl bg-muted/20">
-                                        Video này không có hoặc không thể trích xuất tag.
+                                        This video has no tags or they cannot be extracted.
                                     </div>
                                 )}
                             </CardContent>
@@ -278,8 +278,8 @@ export default function YoutubeToolPage() {
                     <TabsContent value="qrcode" className="mt-0">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Mã QR Video</CardTitle>
-                                <CardDescription>Quét mã này để mở trực tiếp video trên điện thoại</CardDescription>
+                                <CardTitle>Video QR Code</CardTitle>
+                                <CardDescription>Scan this code to open the video directly on your phone</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center p-8">
                                 <div className="bg-white p-4 rounded-xl shadow-sm mb-6 inline-block" id="qrcode-container">

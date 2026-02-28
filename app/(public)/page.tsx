@@ -3,10 +3,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Youtube, Music, Heart, Coffee, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { DonateInlineCard } from "@/components/donate-modal";
 
 export const metadata: Metadata = {
-    title: "My Tools & Donation - Xin chào!",
-    description: "Trang web tổng hợp các công cụ hữu ích và ủng hộ cho tôi.",
+    title: "My Tools & Donation - Hello!",
+    description: "A collection of useful tools and an option to donate to me.",
 };
 
 export default function HomePage() {
@@ -21,23 +22,23 @@ export default function HomePage() {
                     </div>
                 </div>
                 <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
-                    Xin chào! Tôi làm <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600">Công Cụ Nhỏ</span>
+                    Hello! I make <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-600">Little Tools</span>
                 </h1>
                 <p className="max-w-[600px] text-lg sm:text-xl text-muted-foreground">
-                    Tôi tạo ra trang web này để cung cấp một số công cụ miễn phí giúp ích cho mọi người.
-                    Nếu bạn thấy nó hữu ích, bạn có thể ủng hộ tôi một cốc cà phê nhé! ❤️
+                    I created this website to provide free, useful tools for everyone.
+                    If you find it helpful, please consider buying me a coffee! ❤️
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                     <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/25 bg-gradient-to-r from-primary to-pink-600 border-0">
                         <Link href="#donate">
                             <Heart className="mr-2 h-5 w-5 fill-white/20" />
-                            Ủng Hộ Tôi
+                            Donate to Me
                         </Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="rounded-full bg-background/50 backdrop-blur-sm border-border">
                         <Link href="#tools">
                             <Coffee className="mr-2 h-5 w-5" />
-                            Khám Phá Công Cụ
+                            Explore Tools
                         </Link>
                     </Button>
                 </div>
@@ -47,7 +48,7 @@ export default function HomePage() {
             <section id="tools" className="flex flex-col items-center py-10">
                 <h2 className="text-3xl font-bold mb-8 flex items-center gap-2">
                     <Coffee className="h-8 w-8 text-primary" />
-                    Các Công Cụ Của Tôi
+                    My Tools
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
                     <Card className="group overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
@@ -58,20 +59,20 @@ export default function HomePage() {
                                 </div>
                                 <div>
                                     <CardTitle>Youtube Tools</CardTitle>
-                                    <CardDescription>Tải video, audio, ảnh thumbnail</CardDescription>
+                                    <CardDescription>Download videos, audios, thumbnails</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="pt-4 flex-1">
                             <p className="text-muted-foreground text-sm">
-                                Hỗ trợ tải video Youtube chất lượng cao, chuyển đổi video sang mp3,
-                                trích xuất tag video, tải và resize thumbnail, tạo mã QR cho video.
+                                Support downloading high-quality YouTube videos, converting videos to mp3,
+                                extracting video tags, downloading and resizing thumbnails, generating QR codes for videos.
                             </p>
                         </CardContent>
                         <CardFooter>
                             <Button asChild className="w-full group-hover:bg-primary" variant="secondary">
                                 <Link href="/youtube">
-                                    Dùng Ngay <ExternalLink className="ml-2 h-4 w-4" />
+                                    Use Now <ExternalLink className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
                         </CardFooter>
@@ -85,20 +86,20 @@ export default function HomePage() {
                                 </div>
                                 <div>
                                     <CardTitle>TikTok Tools</CardTitle>
-                                    <CardDescription>Tải video không logo, Trend tracker</CardDescription>
+                                    <CardDescription>Download logo-free videos, Trend tracker</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="pt-4 flex-1">
                             <p className="text-muted-foreground text-sm">
-                                Tải video TikTok không watermark, xem các bài hát đang trending trong 48h qua,
-                                theo dõi các sản phẩm đang bán chạy trên TikTok Shop.
+                                Download TikTok videos without watermark, see trending songs in the last 48 hours,
+                                track trending products on TikTok Shop.
                             </p>
                         </CardContent>
                         <CardFooter>
                             <Button asChild className="w-full group-hover:bg-primary" variant="secondary">
                                 <Link href="/tiktok">
-                                    Dùng Ngay <ExternalLink className="ml-2 h-4 w-4" />
+                                    Use Now <ExternalLink className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
                         </CardFooter>
@@ -114,25 +115,14 @@ export default function HomePage() {
                     </div>
                     <h2 className="text-3xl font-bold mb-4 relative z-10 flex items-center justify-center gap-2">
                         <Heart className="h-8 w-8 text-pink-500 fill-pink-500" />
-                        Ủng Hộ Chút Cà Phê
+                        Buy Me a Coffee
                     </h2>
                     <p className="text-muted-foreground mb-8 relative z-10">
-                        Nếu bạn thấy những công cụ này hữu ích và muốn tiếp thêm động lực cho tôi duy trì server,
-                        nâng cấp tính năng mới... bạn có thể ủng hộ tôi qua các thông tin bên dưới nhé. Cảm ơn bạn rất nhiều!
+                        If you find these tools helpful and want to support me to maintain the server
+                        and upgrade new features... you can donate to me via the information below. Thank you very much!
                     </p>
 
-                    <div className="grid sm:grid-cols-2 gap-4 relative z-10 text-left">
-                        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-xl border border-border/50">
-                            <h3 className="font-semibold text-primary mb-1">MoMo</h3>
-                            <p className="font-mono text-lg">0123.456.789</p>
-                            <p className="text-sm text-muted-foreground">Tên: NGUYEN VAN A</p>
-                        </div>
-                        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-xl border border-border/50">
-                            <h3 className="font-semibold text-blue-500 mb-1">Vietcombank</h3>
-                            <p className="font-mono text-lg">9999999999</p>
-                            <p className="text-sm text-muted-foreground">Tên: NGUYEN VAN A</p>
-                        </div>
-                    </div>
+                    <DonateInlineCard />
                 </div>
             </section>
         </div>
