@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "MyDonation - Ủng Hộ Creator Yêu Thích",
-    template: "%s | MyDonation",
+    default: "MyLittleTool - Công Cụ Hữu Ích Dành Cho Bạn",
+    template: "%s | MyLittleTool",
   },
-  description: "Nền tảng ủng hộ creator yêu thích của bạn với Action Cards độc đáo",
-  keywords: ["donation", "creator", "support", "action cards"],
+  description: "Bộ công cụ tải video/audio Youtube và TikTok tiện lợi nhất",
+  keywords: ["tools", "youtube", "tiktok", "downloader"],
 };
 
 export default function RootLayout({
