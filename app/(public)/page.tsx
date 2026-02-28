@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Youtube, Music, Heart, Coffee, ExternalLink } from "lucide-react";
+import { Youtube, Music, Heart, Coffee, ExternalLink, Facebook } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { DonateInlineCard } from "@/components/donate-modal";
 
@@ -54,33 +54,6 @@ export default function HomePage() {
                     <Card className="group overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
                         <CardHeader className="bg-muted/30 pb-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-lg bg-red-500/10 text-red-500">
-                                    <Youtube className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <CardTitle>Youtube Tools</CardTitle>
-                                    <CardDescription>Download videos, audios, thumbnails</CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-4 flex-1">
-                            <p className="text-muted-foreground text-sm">
-                                Support downloading high-quality YouTube videos, converting videos to mp3,
-                                extracting video tags, downloading and resizing thumbnails, generating QR codes for videos.
-                            </p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild className="w-full group-hover:bg-primary" variant="secondary">
-                                <Link href="/youtube">
-                                    Use Now <ExternalLink className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
-
-                    <Card className="group overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
-                        <CardHeader className="bg-muted/30 pb-4">
-                            <div className="flex items-center gap-3">
                                 <div className="p-3 rounded-lg bg-slate-800 text-slate-100 dark:bg-slate-100 dark:text-slate-900">
                                     <Music className="h-6 w-6" />
                                 </div>
@@ -99,6 +72,32 @@ export default function HomePage() {
                         <CardFooter>
                             <Button asChild className="w-full group-hover:bg-primary" variant="secondary">
                                 <Link href="/tiktok">
+                                    Use Now <ExternalLink className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+
+                    <Card className="group overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:border-[#1877F2]/50 transition-all duration-300">
+                        <CardHeader className="bg-muted/30 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-lg bg-[#1877F2]/10 text-[#1877F2]">
+                                    <Facebook className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <CardTitle>Facebook Tools</CardTitle>
+                                    <CardDescription>Download HD/SD videos from Facebook</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-4 flex-1">
+                            <p className="text-muted-foreground text-sm">
+                                Download Facebook videos, Reels and Watch content in HD or SD quality directly to your device.
+                            </p>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild className="w-full group-hover:bg-[#1877F2]" variant="secondary">
+                                <Link href="/facebook">
                                     Use Now <ExternalLink className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>

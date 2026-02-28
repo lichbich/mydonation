@@ -1,72 +1,80 @@
 import { NextResponse } from "next/server";
-import play from "play-dl";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-/**
- * Detect if a format is combined (video+audio) by checking if mimeType
- * has two codecs separated by a comma.
- * e.g. 'video/mp4; codecs="avc1.42001E, mp4a.40.2"' → combined ✅
- *      'video/mp4; codecs="avc1.640028"'              → video-only ❌
- */
-function isCombinedFormat(mimeType: string): boolean {
-    const codecs = mimeType.match(/codecs="([^"]+)"/)?.[1] ?? "";
-    return codecs.includes(",");
+// Public Piped API instances (fallback chain for reliability)
+const PIPED_INSTANCES = [
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.adminforge.de",
+    "https://piped-api.garudalinux.org",
+    "https://api.piped.yt",
+];
+
+function extractVideoId(url: string): string | null {
+    try {
+        const u = new URL(url.includes("://") ? url : `https://${url}`);
+        if (u.hostname.includes("youtu.be")) return u.pathname.slice(1).split("?")[0];
+        return u.searchParams.get("v");
+    } catch {
+        return null;
+    }
+}
+
+async function fetchPipedStreams(videoId: string): Promise<any> {
+    let lastErr: Error = new Error("All Piped instances failed");
+    for (const instance of PIPED_INSTANCES) {
+        try {
+            const res = await fetch(`${instance}/streams/${videoId}`, {
+                signal: AbortSignal.timeout(12000),
+                headers: { Accept: "application/json" },
+            });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (data.error) continue;
+            return data;
+        } catch (e: any) {
+            lastErr = e;
+        }
+    }
+    throw lastErr;
 }
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get("url");
 
-    if (!url) {
-        return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
-    }
+    if (!url) return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+
+    const videoId = extractVideoId(url);
+    if (!videoId) return NextResponse.json({ error: "Could not extract video ID" }, { status: 400 });
 
     try {
-        const info = await play.video_info(url);
-        const details = info.video_details;
-        const formats = (info.format as any[]) || [];
+        const data = await fetchPipedStreams(videoId);
 
-        const thumbnail = details.thumbnails?.at(-1)?.url ?? "";
-
-        // ─── Video formats ───────────────────────────────────────────
-        // Detect by qualityLabel, differentiate combined vs video-only via codec count
-        const videoFormats = formats
-            .filter((f) => f.qualityLabel && f.mimeType?.includes("video"))
-            .map((f) => ({
-                itag: f.itag,
-                quality: f.qualityLabel as string,
-                mime: f.mimeType?.split(";")[0] ?? "video/mp4",
+        // ─── Video formats (combined video+audio only) ────────────────
+        const videoFormats = ((data.videoStreams as any[]) || [])
+            .filter((s) => !s.videoOnly && s.quality)
+            .map((s) => ({
+                itag: 0,
+                quality: s.quality as string,
+                mime: s.mimeType?.split(";")[0] ?? "video/mp4",
                 hasVideo: true,
-                hasAudio: isCombinedFormat(f.mimeType ?? ""),
-                hasUrl: !!f.url,
+                hasAudio: true,
             }))
-            // Only show formats with a direct URL (downloadable without ffmpeg merge)
-            .filter((f) => f.hasAudio && f.hasUrl)
-            // Deduplicate by quality label
             .filter((v, i, a) => a.findIndex((t) => t.quality === v.quality) === i);
 
-        // ─── Audio-only formats ───────────────────────────────────────
-        // Detect by: mimeType includes "audio" AND no qualityLabel
-        const audioFormats = formats
-            .filter((f) => !f.qualityLabel && f.mimeType?.includes("audio"))
-            .map((f) => {
-                // Infer quality label from known itag mapping
-                const bitrateMap: Record<number, string> = {
-                    139: "48kbps", 140: "128kbps", 141: "256kbps",
-                    249: "50kbps", 250: "70kbps", 251: "160kbps",
-                    171: "128kbps", 172: "256kbps",
-                };
-                const qualityLabel = bitrateMap[f.itag] ?? "audio";
-                const bitrateNum = parseInt(qualityLabel) || 0;
+        // ─── Audio formats ────────────────────────────────────────────
+        const audioFormats = ((data.audioStreams as any[]) || [])
+            .map((s) => {
+                const bitrate = Math.round((s.bitrate ?? s.audioBitrate ?? 0) / 1000);
                 return {
-                    itag: f.itag,
-                    quality: qualityLabel,
-                    mime: f.mimeType?.split(";")[0] ?? "audio/webm",
+                    itag: 0,
+                    quality: `${bitrate || "?"}kbps`,
+                    mime: s.mimeType?.split(";")[0] ?? "audio/mpeg",
                     hasVideo: false,
                     hasAudio: true,
-                    bitrate: bitrateNum,
+                    bitrate,
                 };
             })
             .sort((a, b) => b.bitrate - a.bitrate)
@@ -74,17 +82,14 @@ export async function GET(req: Request) {
             .slice(0, 3);
 
         return NextResponse.json({
-            id: details.id,
-            title: details.title,
-            tags: (details as any).keywords || [],
-            thumbnail,
-            formats: {
-                video: videoFormats,
-                audio: audioFormats,
-            },
+            id: videoId,
+            title: data.title ?? "",
+            tags: data.tags ?? [],
+            thumbnail: data.thumbnailUrl ?? "",
+            formats: { video: videoFormats, audio: audioFormats },
         });
     } catch (error: any) {
-        console.error("YouTube parse error:", error);
+        console.error("YouTube parse error:", error.message);
         return NextResponse.json({ error: "Failed to parse YouTube video" }, { status: 500 });
     }
 }

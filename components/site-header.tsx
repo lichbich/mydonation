@@ -17,6 +17,7 @@ import {
     Heart,
     Youtube,
     Music,
+    Facebook,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,7 @@ export function SiteHeader() {
                         </Link>
 
                         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                            <Link
+                            {/* <Link
                                 href="/youtube"
                                 className={cn(
                                     "flex items-center gap-2 transition-colors hover:text-primary",
@@ -54,7 +55,7 @@ export function SiteHeader() {
                             >
                                 <Youtube className="h-4 w-4" />
                                 Tool for Youtube
-                            </Link>
+                            </Link> */}
                             <Link
                                 href="/tiktok"
                                 className={cn(
@@ -64,6 +65,16 @@ export function SiteHeader() {
                             >
                                 <Music className="h-4 w-4" />
                                 Tool for TikTok
+                            </Link>
+                            <Link
+                                href="/facebook"
+                                className={cn(
+                                    "flex items-center gap-2 transition-colors hover:text-primary",
+                                    pathname === "/facebook" ? "text-[#1877F2]" : "text-muted-foreground"
+                                )}
+                            >
+                                <Facebook className="h-4 w-4" />
+                                Tool for Facebook
                             </Link>
                         </nav>
                     </div>
@@ -117,14 +128,14 @@ export function SiteHeader() {
                                         <Heart className="h-4 w-4" />
                                         Home
                                     </Link>
-                                    <Link
+                                    {/* <Link
                                         href="/youtube"
                                         onClick={() => setMobileOpen(false)}
                                         className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted transition-colors"
                                     >
                                         <Youtube className="h-4 w-4" />
                                         Tool for Youtube
-                                    </Link>
+                                    </Link> */}
                                     <Link
                                         href="/tiktok"
                                         onClick={() => setMobileOpen(false)}
@@ -132,6 +143,14 @@ export function SiteHeader() {
                                     >
                                         <Music className="h-4 w-4" />
                                         Tool for TikTok
+                                    </Link>
+                                    <Link
+                                        href="/facebook"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                                    >
+                                        <Facebook className="h-4 w-4 text-[#1877F2]" />
+                                        Tool for Facebook
                                     </Link>
                                     <div className="my-4 h-px bg-border/50 mx-4" />
                                     <div className="px-4">

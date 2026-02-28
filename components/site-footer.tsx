@@ -21,8 +21,9 @@ export function SiteFooter() {
                     <div>
                         <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Tools</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><Link href="/youtube" className="text-foreground/80 hover:text-primary transition-colors">Youtube Tools</Link></li>
+                            {/* <li><Link href="/youtube" className="text-foreground/80 hover:text-primary transition-colors">Youtube Tools</Link></li> */}
                             <li><Link href="/tiktok" className="text-foreground/80 hover:text-primary transition-colors">TikTok Tools</Link></li>
+                            <li><Link href="/facebook" className="text-foreground/80 hover:text-[#1877F2] transition-colors">Facebook Tools</Link></li>
                             <li><Link href="/#donate" className="text-foreground/80 hover:text-primary transition-colors">Donate to me</Link></li>
                         </ul>
                     </div>
