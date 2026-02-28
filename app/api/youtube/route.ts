@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-const ytdl = require("ytdl-core-enhanced");
+// @ts-ignore
+import ytdl from "ytdl-core-enhanced";
+
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-const ytdl = require("ytdl-core-enhanced");
+// @ts-ignore
+import ytdl from "ytdl-core-enhanced";
 import { Readable } from "stream";
+
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 // Helper to convert Node.js Readable stream to Web stream
 function nodeStreamToWebStream(nodeStream: Readable) {
